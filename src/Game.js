@@ -62,10 +62,25 @@ function Game() {
 
   const canvasRef = useRef(null);
 
+  const [isGame, setIsGame] = useState(false);
+  const [isLose, setIsLose] = useState(false);
+  const [score, setScore] = useState(0);
   const [ball, setBall] = useState(createBall);
   const [paddle, setPaddle] = useState(createPaddle);
   const [bricks, setBricks] = useState(createBricks);
-  const [score, setScore] = useState(0);
+
+  const isGameRef = useRef(isGame);
+  isGameRef.current = isGame;
+  const isLoseRef = useRef(isLose);
+  isLoseRef.current = isLose;
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
+  const ballRef = useRef(ball);
+  ballRef.current = ball;
+  const paddleRef = useRef(paddle);
+  paddleRef.current = paddle;
+  const bricksRef = useRef(bricks);
+  bricksRef.current = bricks;
 
   useEffect(() => {
     update();
@@ -73,22 +88,33 @@ function Game() {
 
   const drawBall = (ctx) => {
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = ball.color;
+    ctx.arc(
+      ballRef.current.x,
+      ballRef.current.y,
+      ballRef.current.radius,
+      0,
+      2 * Math.PI
+    );
+    ctx.fillStyle = ballRef.current.color;
     ctx.fill();
     ctx.closePath();
   };
 
   const drawPaddle = (ctx) => {
     ctx.beginPath();
-    ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
-    ctx.fillStyle = paddle.color;
+    ctx.rect(
+      paddleRef.current.x,
+      paddleRef.current.y,
+      paddleRef.current.width,
+      paddleRef.current.height
+    );
+    ctx.fillStyle = paddleRef.current.color;
     ctx.fill();
     ctx.closePath();
   };
 
   const drawBricks = (ctx) => {
-    for (let brick of bricks) {
+    for (let brick of bricksRef.current) {
       if (brick.isVisible) {
         ctx.beginPath();
         ctx.rect(brick.x, brick.y, brick.width, brick.height);
@@ -100,52 +126,59 @@ function Game() {
   };
 
   const moveBall = () => {
-    ball.x += ball.dx;
-    ball.y += ball.dy;
+    ballRef.current.x += ballRef.current.dx;
+    ballRef.current.y += ballRef.current.dy;
 
     // wall collsions
-    if (ball.x + ball.radius > canvasWidth || ball.x - ball.radius < 0) {
-      ball.dx = -ball.dx;
+    if (
+      ballRef.current.x + ballRef.current.radius > canvasWidth ||
+      ballRef.current.x - ballRef.current.radius < 0
+    ) {
+      ballRef.current.dx = -ballRef.current.dx;
     }
-    if (ball.y + ball.radius > canvasHeight || ball.y - ball.radius < 0) {
-      ball.dy = -ball.dy;
+    if (ballRef.current.y - ballRef.current.radius < 0) {
+      ballRef.current.dy = -ballRef.current.dy;
+    }
+    if (ballRef.current.y + ballRef.current.radius > canvasHeight) {
+      setIsGame(false);
+      setIsLose(true);
     }
 
     // paddle collision
     if (
-      ball.y + ball.radius > paddle.y &&
-      ball.x + ball.radius < paddle.x + paddle.width &&
-      ball.x - ball.radius > paddle.x
+      ballRef.current.y > paddleRef.current.y &&
+      ballRef.current.x < paddleRef.current.x + paddleRef.current.width &&
+      ballRef.current.x > paddleRef.current.x
     ) {
-      ball.dy = -ball.speed;
+      ballRef.current.dy = -ballRef.current.speed;
     }
 
     // brick collision
-    for (let brick of bricks) {
+    for (let brick of bricksRef.current) {
       if (brick.isVisible) {
         if (
-          ball.x - ball.radius > brick.x && // left
-          ball.x + ball.radius < brick.x + brick.width && // right
-          ball.y - ball.radius < brick.y + brick.height && // down
-          ball.y + ball.radius > brick.y // top
+          ballRef.current.x > brick.x && // left
+          ballRef.current.x < brick.x + brick.width && // right
+          ballRef.current.y - ballRef.current.radius < brick.y + brick.height && // down
+          ballRef.current.y + ballRef.current.radius > brick.y // top
         ) {
-          ball.dy = -ball.dy;
+          ballRef.current.dy = -ballRef.current.dy;
           brick.isVisible = false;
-          //setScore(score + 1);
+          setScore(scoreRef.current + 1);
         }
       }
     }
   };
 
   const movePaddle = () => {
-    paddle.x += paddle.dx;
+    paddleRef.current.x += paddleRef.current.dx;
 
     // wall collsions
-    if (paddle.x < 0) {
-      paddle.x = 0;
+    if (paddleRef.current.x < 0) {
+      paddleRef.current.x = 0;
     }
-    if (paddle.x + paddle.width > canvasWidth) {
-      paddle.x = canvasWidth - paddle.width;
+    if (paddleRef.current.x + paddleRef.current.width > canvasWidth) {
+      paddleRef.current.x = canvasWidth - paddleRef.current.width;
     }
   };
 
@@ -153,8 +186,10 @@ function Game() {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    moveBall();
-    movePaddle();
+    if (isGameRef.current) {
+      moveBall();
+      movePaddle();
+    }
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -165,33 +200,37 @@ function Game() {
     requestAnimationFrame(update);
   };
 
-  const handleKeyPress = (event) => {
-    if (event.key === "ArrowLeft") {
-      paddle.dx = -paddle.speed;
-    }
-    if (event.key === "ArrowRight") {
-      paddle.dx = paddle.speed;
-    }
-  };
-
   const handleKeyDown = (event) => {
     if (event.key === "ArrowLeft") {
-      paddle.dx = -paddle.speed;
+      paddleRef.current.dx = -paddleRef.current.speed;
     }
     if (event.key === "ArrowRight") {
-      paddle.dx = paddle.speed;
+      paddleRef.current.dx = paddleRef.current.speed;
     }
   };
 
   const handleKeyUp = (event) => {
-    paddle.dx = 0;
+    paddleRef.current.dx = 0;
   };
 
-  //keyup
+  const resetGame = () => {
+    setIsGame(false);
+    setIsLose(false);
+    setScore(0);
+    setBall(createBall());
+    setPaddle(createPaddle());
+    setBricks(createBricks());
+  };
 
   return (
-    <Styles>
-      <div className="title">Breakout {score}</div>
+    <Styles
+      style={{
+        display: "grid",
+        gridTemplateRows: "auto 1fr auto",
+        backgroundColor: "#5d35ca",
+      }}
+    >
+      <div className="title">Breakout {scoreRef.current}</div>
       <div>
         <canvas
           tabIndex="0"
@@ -199,11 +238,23 @@ function Game() {
           ref={canvasRef}
           width={canvasWidth}
           height={canvasHeight}
-          style={{ border: "1px solid black" }}
+          style={{ border: "1px solid black", backgroundColor: "white" }}
+          onClick={() => {
+            if (!isGame && !isLose) {
+              setIsGame(true);
+            }
+          }}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
         />
       </div>
+      <button
+        onClick={() => {
+          resetGame();
+        }}
+      >
+        new game
+      </button>
     </Styles>
   );
 }
