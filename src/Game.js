@@ -6,23 +6,23 @@ const Styles = Styled.div`
 
 const createBall = () => {
   return {
-    x: 30,
-    y: 300,
+    x: 305,
+    y: 200,
     radius: 10,
     speed: 5,
-    dx: 1,
-    dy: 1,
+    dx: 0.5,
+    dy: 3,
     color: "#5d35ca",
   };
 };
 
 const createPaddle = () => {
   return {
-    x: 100,
+    x: 255,
     y: 350,
     width: 100,
     height: 10,
-    speed: 7,
+    speed: 10,
     dx: 0,
     color: "#5d35ca",
   };
@@ -151,6 +151,7 @@ function Game() {
       ballRef.current.x > paddleRef.current.x
     ) {
       ballRef.current.dy = -ballRef.current.speed;
+      ballRef.current.dx += paddleRef.current.dx * 0.2;
     }
 
     // brick collision
@@ -225,20 +226,30 @@ function Game() {
   return (
     <Styles
       style={{
+        width: "100vw",
+        height: "100vh",
         display: "grid",
-        gridTemplateRows: "auto 1fr auto",
+        gridTemplateRows: ".5fr auto 1fr",
         backgroundColor: "#5d35ca",
       }}
     >
-      <div className="title">Breakout {scoreRef.current}</div>
-      <div>
+      <div className="title" style={{ fontSize: "4em", color: "white" }}>
+        Breakout
+      </div>
+      <div style={{ margin: "0px 0px 10px 0px" }}>
+        <div style={{ color: "white", margin: "0px 0px 10px 0px" }}>
+          Score: {scoreRef.current}
+        </div>
         <canvas
           tabIndex="0"
           id="game-canvas"
           ref={canvasRef}
           width={canvasWidth}
           height={canvasHeight}
-          style={{ border: "1px solid black", backgroundColor: "white" }}
+          style={{
+            backgroundColor: "white",
+            borderRadius: ".5em",
+          }}
           onClick={() => {
             if (!isGame && !isLose) {
               setIsGame(true);
@@ -248,13 +259,23 @@ function Game() {
           onKeyUp={handleKeyUp}
         />
       </div>
-      <button
-        onClick={() => {
-          resetGame();
-        }}
-      >
-        new game
-      </button>
+      <div>
+        <button
+          style={{
+            width: "80px",
+            height: "25px",
+            backgroundColor: "white",
+            border: "0px",
+            borderRadius: ".5em",
+            color: "#5d35ca",
+          }}
+          onClick={() => {
+            resetGame();
+          }}
+        >
+          New Game
+        </button>
+      </div>
     </Styles>
   );
 }
